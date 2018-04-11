@@ -1,0 +1,5 @@
+# Ignore loci directory
+loci/
+
+# Ignore input data file
+MAS_c85d20p75i122.loci
