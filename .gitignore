@@ -3,3 +3,9 @@ loci/
 
 # Ignore input data file
 MAS_c85d20p75i122.loci
+
+#Output from program
+out.fas
+
+# Example phylip file
+final_haplotypes.phy
