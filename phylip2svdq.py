@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import operator
 
 # Uses argparse library to parse command-line arguments; argparse must be imported
 def Get_Arguments():
@@ -39,41 +40,51 @@ def read_phylip(file):
 
     return loci
     
-def write_nexus(dict, ofile, dimensions):
+def write_first_block(ofile, dimensions):
 
     line1 = "#NEXUS"
     line2 = "BEGIN DATA;"
     line3 = "DIMENSIONS NTAX=" + dimensions[0] + " NCHAR=" + dimensions[1] + ";"
     line4 = "FORMAT DATATYPE=DNA MISSING=N GAP=- INTERLEAVE=YES;"
     line5 = "MATRIX"
-    colon = ";"
-    end = "END"
     
     ofile.write("{}\n{}\n{}\n{}\n{}\n".format(line1, line2, line3, line4, line5))
     
-    for k, v in dict.items():
-        ofile.write("{}\t{:>15}\n".format(str(k), str(v)))
-    
-    ofile.write("{}\n{}\n".format(colon, end))
         
-def get_unique_identifiers(pattern, hit, number, sample_number, end):
+def get_unique_identifiers(pattern, hit, number, sample_number):
 
-    if not hit:
-        hit[pattern] = number
+    if not hit and sample_number == 1:
+        hit[pattern] = sample_number
+        end = 1
+        return end, sample_number, hit
     
-    if pattern not in hit:
-        number += 1
-        hit[pattern] = number
+    if hit and pattern not in hit:
+        hit[pattern] = sample_number
+        end = sample_number
+        return end, sample_number, hit
+        
+    elif sample_number == last_sample+1:
         end = sample_number-1
-        return end, sample_number
+        
     else:
-        return end, sample_number
+        end = 0
+        return end, sample_number, hit
     
-def write_taxblock(pattern, outfile, tpl):
+def write_taxpart(pattern, outfile, range_tupl):
+    
+    outfile.write("\t\t{}\t:    {}-{},\n".format(str(pattern), str(range_tupl[0]), str(range_tupl[1])))
+    
+def write_sorted_matrix(samples):
 
-    outfile.write("\t\t{}\t:  {}-{},\n".format(pattern, tpl[0], tpl[1]))
-   
+    for k, v in sorted(samples.items(), key=lambda p: p[0][arguments.start-1:arguments.end]):
+        fout.write("{}\t{:>15}\n".format(str(k), str(v)))
+        
+    fout.write(";\nEND;\n\n") 
     
+    partline1 = "\nbegin sets;"
+    partline2 = "\ttaxpartition popmap ="
+    fout.write("{}\n{}\n".format(partline1, partline2))
+
 ##########################################################################################################################################
 ##############################################################MAIN########################################################################
 ##########################################################################################################################################
@@ -86,14 +97,8 @@ samples = dict()
 unique_ids = dict()
 
 popnum = 1
-
 sample_number = 1
-
-ranges = ()
 range_begin = 1
-
-
-
 
 with open(arguments.phylip, "r") as fin:
     with open(arguments.nexus, "w") as fout:
@@ -101,39 +106,39 @@ with open(arguments.phylip, "r") as fin:
         header = fin.readline()
         
         dimensions = header.split()
-        
+        last_sample = int(dimensions[0])
+
         samples = read_phylip(fin)
                      
-        write_nexus(samples, fout, dimensions)
-
-        line1 = "\nbegin sets;"
-        line2 = "\ttaxpartition popmap ="
-        fout.write("{}\n{}\n".format(line1, line2))
+        write_first_block(fout, dimensions)
+        write_sorted_matrix(samples)
         
         previous_patt = list(sorted(samples.keys()))[0][arguments.start-1:arguments.end]
+        final_patt = list(sorted(samples.keys()))[-1][arguments.start-1:arguments.end]        
         
-        final_patt = list(sorted(samples.keys()))[-1][arguments.start-1:arguments.end]
-        
-        for k in sorted(samples.keys()):
-            range_end = 0
+        #Sorts dictionary by pattern specified by -s and -e options
+        for k, v in sorted(samples.items(), key=lambda p: p[0][arguments.start-1:arguments.end]):
             
-            
+            # Current pattern iteration
             patt = k[arguments.start-1:arguments.end]
-                    
-            range_end, sample_number = get_unique_identifiers(patt, unique_ids, popnum, sample_number, range_end)  # Returns popID and adds 1 for each unique ID
+            
+            # Returns popID dictionary and adds 1 for each unique ID
+            # Also returns number of last entry of each popID: 0 if 
+            range_end, sample_number, unique_ids = get_unique_identifiers(patt, unique_ids, popnum, sample_number)
             
             sample_number += 1
             
-            if range_end > 0:
-                ranges = (range_begin, range_end)
-                range_begin = range_end+1
-                write_taxblock(previous_patt, fout, ranges)
+            # If new unique pattern is found, get sample ranges for previous pattern:
+            if range_end > 1 and range_end < last_sample+1:
+                patt_range = (range_begin, range_end-1)
+                range_begin = range_end
+                write_taxpart(previous_patt, fout, patt_range)
+
                 previous_patt = patt
-        
-        
-        fout.write("\t\t{}\t:  {}-{};\n".format(final_patt, range_begin, sample_number-1))
+            
+            # If last pattern:
+            if sample_number == last_sample+1:
+                patt_range = (range_begin, last_sample)
+                fout.write("\t\t{}\t:    {}-{};\n".format(str(patt), str(patt_range[0]), str(patt_range[1])))
+
         fout.write("end;\n")
-        
-                        
-                    
-        
