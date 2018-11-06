@@ -52,7 +52,8 @@ def writePhylip(alignment, fout, indcount, seqlen):
     fout.write(str(indcount) + " " + str(seqlen) + "\n")
 
     for k, v in alignment.items():
-        k = k[1:]
+        if k.startswith(">"):
+            k = k[1:]
         fout.write(k.ljust(15) + "\t" + str(v) + "\n")
 
 # Makes subdirectory for outfiles
