@@ -9,3 +9,5 @@ out.fas
 
 # Example phylip file
 final_haplotypes.phy
+
+*.loci
