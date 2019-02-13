@@ -1,7 +1,7 @@
 # file_converters
 File conversion scripts for DNA sequence data  
 
-Most are written in Python 3.X  
+All the scripts require Python 3  
 
 Help Menus:  
 `./<script> -h`  
