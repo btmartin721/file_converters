@@ -4,5 +4,8 @@ begin sets;
 	charset part2 = 88-173;
 	charset part3 = 174-260;
 	charset part4 = 261-348;
+<<<<<<< HEAD
 	charset part5 = 349-434;
+=======
+>>>>>>> 0b5b1ca206309a823ef3ea043d06c2ae6977d166
 end;
