@@ -11,3 +11,12 @@ out.fas
 final_haplotypes.phy
 
 *.loci
+*.phy
+
+# Associated with dfoilPicker2compd.py
+myoutgroups.txt
+compDcommands.txt
+*.compDtest.txt
+*.split.txt
+*.picked.txt
+*_picked.txt

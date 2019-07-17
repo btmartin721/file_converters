@@ -3,6 +3,37 @@
 import argparse
 import sys
 
+def main():
+
+
+    arguments = Get_Arguments()
+
+    check_if_exists(arguments.loci)
+
+    locus_num = 0
+    site_pos = 1
+    length_part = set()
+
+    nexus = str(arguments.out) + ".nex"
+    partitions = str(arguments.out) + ".partitions"
+
+    with open(arguments.loci, "r") as fin:
+        with open(nexus, "w") as nex:
+            nex.write("#nexus\n")
+            nex.write("begin sets;\n")
+
+            with open(partitions, "w") as part:
+
+            # Call generator function on input .loci file
+            # Output is a NEXUS and RAxML-style partition input file.
+                for lcount, slen, total_len in locusGenerator(fin, locus_num):
+                    upper_bound = write_nexpartition(nex, lcount, slen, site_pos)
+                    write_partitions(part, lcount, slen, site_pos, upper_bound)
+                    site_pos += slen
+                print(sum(total_len))
+                nex.write("end;\n")
+
+
 # Uses argparse library to parse command-line arguments; argparse must be imported
 def Get_Arguments():
 
@@ -33,19 +64,31 @@ def check_if_exists(filename):
 
 def locusGenerator(file, locus_count):
 
-    for line in fin:
+    length_set = set()
+    length_list = list()
+    total_length = 0
+    for line in file:
         line = line.strip()
         lines = line.split()
 
         if line.startswith("//"):
             locus_count += 1
-            yield locus_count, seq_len
+            if len(length_set) > 1:
+                print("Unequal lengths: " + str(length_set))
+                length_set.clear()
+                length_list.append(seq_len)
+                yield locus_count, seq_len, length_list
+            else:
+                length_set.clear()
+                length_list.append(seq_len)
+                yield locus_count, seq_len, length_list
 
         elif line and \
         (line[0].isalpha() or \
         line[0].isdigit() or \
         line[0].startswith(">")):
             seq_len = len(lines[1])
+            length_set.add(seq_len)
 
 def write_nexpartition(fout, loc_count, seqlen, site_pos):
 
@@ -63,29 +106,8 @@ def write_partitions(fout, loc_count, seqlen, site_pos, upper_site_bound):
 ##########################################################################################################################################
 ##############################################################MAIN########################################################################
 
-arguments = Get_Arguments()
+if __name__ == "__main__":
 
-check_if_exists(arguments.loci)
-
-locus_num = 0
-site_pos = 1
-length_part = set()
-
-nexus = str(arguments.out) + ".nex"
-partitions = str(arguments.out) + ".partitions"
-
-with open(arguments.loci, "r") as fin:
-    with open(nexus, "w") as nex:
-        nex.write("#nexus\n")
-        nex.write("begin sets;\n")
-
-        with open(partitions, "w") as part:
-
-        # Call generator function on input .loci file
-        # Output is a NEXUS and RAxML-style partition input file.
-            for lcount, slen in locusGenerator(fin, locus_num):
-                upper_bound = write_nexpartition(nex, lcount, slen, site_pos)
-                write_partitions(part, lcount, slen, site_pos, upper_bound)
-                site_pos += slen
-
-            nex.write("end;\n")
+    rtrn_code = main()
+    print("Program finished with exit status " + str(rtrn_code) + "\n")
+    sys.exit(rtrn_code)
