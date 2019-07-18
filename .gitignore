@@ -20,3 +20,11 @@ compDcommands.txt
 *.split.txt
 *.picked.txt
 *_picked.txt
+*.hdf5
+test.txt
+test2.txte
+test2.txt
+outgroups.txt
+test3.txt
+outgroup.txt
+

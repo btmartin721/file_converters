@@ -6,6 +6,10 @@ import os
 import sys
 
 from itertools import chain, islice
+from tables import *
+
+class Dfoil(IsDescription):
+    compDtest   =   StringCol(300)   # 300-character String
 
 
 def main():
@@ -20,21 +24,29 @@ def main():
     commandfilename = "compDcommands.txt"
     silentremove(commandfilename) # Remove compDcommands.txt file if exists
 
+    compd_h5 = "compDtest.hdf5"
     with open(file_large, "r") as f:
+        with open_file(compd_h5, mode="w", title="Comp-D Tests") as h5file:
+            group = h5file.create_group("/", "compDtests", "Comp-D Input")
 
-        # For line in DFOIL_picked.txt
-        for count, line in enumerate(f):
-            if not line.strip():
-                continue
+            # For line in DFOIL_picked.txt
+            for count, line in enumerate(f):
+                if not line.strip():
+                    continue
 
-            cols = line.strip().split()
-            compDbase = "compDtest.txt"
-            compDtest = "{}.{}".format(count, compDbase)
+                cols = line.strip().split()
+                compDbase = "compDtest"
+                compDtest = "{}_{}".format(compDbase, count)
 
-            # Write tests to separate files
-            with open(compDtest, "w") as o:
                 cols.reverse()
-                o.write("{}\n{}\n".format(" ".join(outgroup), "\n".join(cols)))
+
+                # Write each output to separate HDF5 tables in one file
+                table = h5file.create_table(group, compDtest, Dfoil, "Test_" + str(count))
+                test = table.row
+                test["compDtest"] = "{}\n{}\n".format(" ".join(outgroup), "\n".join(cols))
+                #o.write("{}\n{}\n".format(" ".join(outgroup), "\n".join(cols)))
+                test.append()
+            table.flush()
 
             # Write comp-D commands to file.
             with open(commandfilename, "a") as o:
@@ -59,7 +71,10 @@ def split_bigfile(iterable, n):
     """Split a large file into equal chunks"""
     iterable = iter(iterable)
     while True:
-        yield chain([next(iterable)], islice(iterable, n-1))
+        try:
+            yield chain([next(iterable)], islice(iterable, n-1))
+        except StopIteration:
+            return
 
 def Get_Arguments():
     """
