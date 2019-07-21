@@ -16,6 +16,7 @@ final_haplotypes.phy
 # Associated with dfoilPicker2compd.py
 myoutgroups.txt
 compDcommands.txt
+compDcommands.*.txt
 *.compDtest.txt
 *.split.txt
 *.picked.txt

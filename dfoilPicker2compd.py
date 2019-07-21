@@ -21,44 +21,58 @@ def main():
     #smallfile = None
     file_large = args.tests
 
-    commandfilename = "compDcommands.txt"
+    commandfilename = "compDcommands"
     silentremove(commandfilename) # Remove compDcommands.txt file if exists
 
-    compd_h5 = "compDtest.hdf5"
+
     with open(file_large, "r") as f:
-        with open_file(compd_h5, mode="w", title="Comp-D Tests") as h5file:
-            group = h5file.create_group("/", "compDtests", "Comp-D Input")
 
+        for chunkCount, piece in enumerate(read_in_chunks(f, args.lines)):
+            compd_h5 = "{}.compDtest.hdf5".format(chunkCount)
+            with open_file(compd_h5, mode="w", title="Comp-D Tests") as h5file:
+                group = h5file.create_group("/", "compDtests", "Comp-D Input")
             # For line in DFOIL_picked.txt
-            for count, line in enumerate(f):
-                if not line.strip():
-                    continue
+                for count, line in enumerate(piece):
+                    #print(line)
+                    #print(count)
+                    if not line.strip():
+                        continue
 
-                cols = line.strip().split()
-                compDbase = "compDtest"
-                compDtest = "{}_{}".format(compDbase, count)
+                    cols = line.strip().split()
+                    #print(cols)
+                    compDbase = "compDtest"
+                    compDtest = "{}_{}".format(compDbase, count)
 
-                cols.reverse()
+                    cols.reverse()
 
-                # Write each output to separate HDF5 tables in one file
-                table = h5file.create_table(group, compDtest, Dfoil, "Test_" + str(count))
-                test = table.row
-                test["compDtest"] = "{}\n{}\n".format(" ".join(outgroup), "\n".join(cols))
-                #o.write("{}\n{}\n".format(" ".join(outgroup), "\n".join(cols)))
-                test.append()
-            table.flush()
+                    # Write each output to separate HDF5 tables in one file
+                    table = h5file.create_table(group, compDtest, Dfoil, "Test_" + str(count))
+                    test = table.row
+                    test["compDtest"] = "{}\n{}\n".format(" ".join(outgroup), "\n".join(cols))
+                    #o.write("{}\n{}\n".format(" ".join(outgroup), "\n".join(cols)))
+                    test.append()
+                    splitcommandfilename = "{}.{}.txt".format(commandfilename,  chunkCount)
+                # Write comp-D commands to file.
+                    with open(splitcommandfilename, "a") as o:
+                        o.write("compD -i {} -t {} -b {} -l {} -PfH -o compdtest.{}.out.txt\n".format(args.phylip, compDtest, args.bootstraps, args.sites, count))
+                table.flush()
 
-            # Write comp-D commands to file.
-            with open(commandfilename, "a") as o:
-                o.write("compD -i {} -t {} -b {} -l {} -PfH -o {}.out.txt\n".format(args.phylip, compDtest, args.bootstraps, args.sites, count))
-
+        #print(piece)
     # Split compDcommands.txt into equal chunks
-    compD_basefile = "compDcommands"
-    with open(commandfilename, "r") as f:
-        for i, lines in enumerate(split_bigfile(f, args.lines)):
-            file_split = "{}.{}.split.txt".format(compD_basefile, i)
-            with open(file_split, "w") as o:
-                o.writelines(lines)
+    #compD_basefile = "compDcommands"
+    #with open(commandfilename, "r") as f:
+        #for i, lines in enumerate(split_bigfile(f, args.lines)):
+            #file_split = "{}.{}.split.txt".format(compD_basefile, i)
+            #with open(file_split, "w") as o:
+                #o.writelines(lines)
+
+def read_in_chunks(file_object, chunk_size):
+    """Lazy function (generator) to read a file piece by piece."""
+    while True:
+        next_n_lines = list(islice(file_object, chunk_size))
+        if not next_n_lines:
+            break
+        yield next_n_lines
 
 def silentremove(filename):
     try:
