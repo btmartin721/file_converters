@@ -32,7 +32,7 @@ def main():
 def write_output(my_list, outfile, inds, pops):
     with open(outfile, "w") as fout:
         for l in range(len(my_list)):
-            fout.write(str(inds[l]) + "\t" + str(pops[l]) + "\t" + my_list[l] + "\n")
+            fout.write(str(inds[l]) + " " + str(pops[l]) + " " + my_list[l] + "\n")
 
 
 def sub_encodings(seqs, codes):
