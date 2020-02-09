@@ -12,5 +12,6 @@ loci2phylip - does the same, except it creates a PHYLIP file for each locus
 phylip2fasta - converts a PHYLIP file to a single FASTA file  
 phylip2svdq - converts PHYLIP file to NEXUS format with a taxpartition for use with SVDquartets  
 multifasta2clades - converts directory of FASTA files to CLADES format  
+phylip2onehotsnps - converts PHYLIP file to one-hot SNP format for input to VAE machine learning species delimitation.
 ```
 
