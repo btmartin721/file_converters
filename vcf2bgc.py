@@ -67,32 +67,39 @@ def main():
     admix_file = "{}_admixedin.txt".format(args.outprefix)
     p1_file = "{}_p0in.txt".format(args.outprefix)
     p2_file = "{}_p1in.txt".format(args.outprefix)
+    loci_order_file = "{}_loci.txt".format(args.outprefix)
 
     # Open file handles.
     admix = open(admix_file, "w")
     p1 = open(p1_file, "w")
     p2 = open(p2_file, "w")
-
+    loci = open(loci_order_file, "w")
+    loci.write("#CHROM POS\n")
+    counter = 0
     # For each locus:
     for record in vcf_reader:
-
+        counter += 1
         # Get ref and alt alleles.
         ref = record.REF
         alt = record.ALT
-        locus = "{}_{}".format(record.CHROM, record.POS)
+        locus = "locus_{}".format(counter)
 
         # Make sure all sites are bi-allelic. Required for BGC.
         if len(alt) > 1:
-            raise ValueError("All SNPs must be bi-allelic. >2 alleles detected for locus {} ...Terminating execution.\n".format(record.CHROM))
+            raise ValueError("All SNPs must be bi-allelic. >2 alleles detected for locus {} {} ...Terminating execution.\n".format(record.CHROM, record.POS))
 
         # Get alternate allele. pyvcf has it as a list.
         alt = str(alt[0])
 
         write_output(record, popsamples, ref, alt, locus, args.outprefix, admix, p1, p2)
+        write_output
+
+        loci.write("{} {}\n".format(record.CHROM, record.POS))
 
     admix.close()
     p1.close()
     p2.close()
+    loci.close()
 
 def get_allele_depth(record, pop, ref, alt, sampledict):
     """
@@ -121,7 +128,7 @@ def get_allele_depth(record, pop, ref, alt, sampledict):
 
         try:
             idx = sampledict[pop].index(call.sample)
-            result.append("{} {}".format(allele_depth[ref], allele_depth[alt]))
+            result.append("{}  {}".format(allele_depth[ref], allele_depth[alt]))
         except:
             continue
 
@@ -152,7 +159,7 @@ def write_output(record, sampledict, ref, alt, locus, prefix, admix, p1, p2):
     p1_output = get_allele_depth(record, "P1", ref, alt, sampledict)
     p2_output = get_allele_depth(record, "P2", ref, alt, sampledict)
 
-    admix.write("{}\npop0\n".format(locus))
+    admix.write("{}\npop_0\n".format(locus))
     p1.write("{}\n".format(locus))
     p2.write("{}\n".format(locus))
     #print("{} {}\n".format(allele_depth[ref], allele_depth[alt]))
