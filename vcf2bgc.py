@@ -88,7 +88,7 @@ def main():
 	nrecords = 0
 	for record in vcf_reader:
 		nrecords += 1
-	print("Processing {} records in VCF file.\n".format(nrecords))
+	print("Processing {} records in VCF file...\n".format(nrecords))
 
 	vcf_reader = vcf.Reader(open(args.vcf), "r")
 
@@ -174,6 +174,8 @@ def main():
 	p2.close()
 	loci.close()
 	linkage_fh.close()
+
+	print("DONE!\n\n")
 
 def normalize_linkagemap(mylist, nmin, nmax, number, fh, loc, one_pos=None):
 	"""
@@ -287,9 +289,28 @@ def get_samples_by_pop(d, admix, p1, p2):
 			p1_inds.append(k)
 		elif str(v) == str(p2):
 			p2_inds.append(k)
+		else:
+			raise ValueError("\n\nPopulation {} is different than P1, P2 and Admixed! Aborting.")
+
+	# Error handling if wrong population specified.
+	if not admix_inds:
+		raise ValueError("\n\nPopulation {} was not found in the popmap file! Aborting\n\n".format(admix))
+	if not p1_inds:
+		raise ValueError("\n\nPopulation {} was not found in the popmap file! Aborting\n\n".format(p1))
+	if not p2_inds:
+		raise ValueError("\n\nPopulation {} was not found in the popmap file! Aborting\n\n".format(p2))
+
 	popdict["Admixed"] = admix_inds
 	popdict["P1"] = p1_inds
 	popdict["P2"] = p2_inds
+
+	# Sanity checks. Print number of individuals in each population.
+	print("\n\nP1 population has {} individuals...\n".format(len(popdict["P1"])))
+
+	print("P2 population has {} individuals...\n".format(len(popdict["P2"])))
+
+	print("Admixed populalation has {} individuals...\n\n".format(len(popdict["Admixed"])))
+
 	return popdict
 
 def read_popmap(filename):
