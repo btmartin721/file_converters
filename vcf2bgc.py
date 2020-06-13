@@ -112,7 +112,8 @@ def main():
 			if j == nrecords:
 				pos_min = min(pos_list) # Get min/max of pos_list.
 				pos_max = max(pos_list)
-				normalize_linkagemap(pos_list, pos_min, pos_max, chrom_number, linkage_fh, locus_list)
+				if args.linkage:
+					normalize_linkagemap(pos_list, pos_min, pos_max, chrom_number, linkage_fh, locus_list)
 		
 		# else current CHROM different than previous_chrom:
 		else:
@@ -121,26 +122,31 @@ def main():
 			pos_max = max(pos_list)
 			if j == nrecords: # If last record and different:
 				if diff_counter > 1:
-					normalize_linkagemap(pos_list, pos_min, pos_max, chrom_number, linkage_fh, locus_list, 1.0)
+					if args.linkage:
+						normalize_linkagemap(pos_list, pos_min, pos_max, chrom_number, linkage_fh, locus_list, 1.0)
 
 					locus_list.clear() # Adding last locus.
 					locus_list.append(locus)
 
 					# Now add the last record.
-					normalize_linkagemap(pos_list, pos_min, pos_max, chrom_number+1, linkage_fh, locus_list, 1.0)
+					if args.linkage:
+						normalize_linkagemap(pos_list, pos_min, pos_max, chrom_number+1, linkage_fh, locus_list, 1.0)
 				else:
-					normalize_linkagemap(pos_list, pos_min, pos_max, chrom_number, linkage_fh, locus_list)
+					if args.linkage:
+						normalize_linkagemap(pos_list, pos_min, pos_max, chrom_number, linkage_fh, locus_list)
 
 					locus_list.clear()
 					locus_list.append(locus)
 
-					normalize_linkagemap(pos_list, pos_min, pos_max, chrom_number+1, linkage_fh, locus_list, 1.0)
+					if args.linkage:
+						normalize_linkagemap(pos_list, pos_min, pos_max, chrom_number+1, linkage_fh, locus_list, 1.0)
 
 			else: # If different than previous_chrom but not last record:
-				if diff_counter > 1: # If multiple different in a row.
+				if diff_counter > 1 and args.linkage: # If multiple different in a row.
 					normalize_linkagemap(pos_list, pos_min, pos_max, chrom_number, linkage_fh, locus_list, 1.0)
 				else: # Normalize 0 -> 1 and write to file.
-					normalize_linkagemap(pos_list, pos_min, pos_max, chrom_number, linkage_fh, locus_list)
+					if args.linkage:
+						normalize_linkagemap(pos_list, pos_min, pos_max, chrom_number, linkage_fh, locus_list)
 
 			# Reset pos_list and then append current chrom value.
 			chrom_number += 1 # Increase chromosome count.
@@ -161,7 +167,6 @@ def main():
 		alt = str(alt[0])
 
 		write_output(record, popsamples, ref, alt, locus, args.outprefix, admix, p1, p2)
-		write_output
 
 		loci.write("{} {}\n".format(record.CHROM, record.POS))
 
@@ -365,6 +370,8 @@ def Get_Arguments():
 								required=False,
 								default="bgc",
 								help="Specify output prefix for BGC files.")
+	optional_args.add_argument("-l", "--linkage",
+								default = True, action="store_false")
 	optional_args.add_argument("-h", "--help",
 								action="help",
 								help="Displays this help menu")
