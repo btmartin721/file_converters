@@ -5,13 +5,13 @@ loci/
 MAS_c85d20p75i122.loci
 
 #Output from program
-out.fas
+out.*
+test.*
 
 # Example phylip file
 final_haplotypes.phy
 
 *.loci
-*.phy
 
 # Associated with dfoilPicker2compd.py
 myoutgroups.txt
